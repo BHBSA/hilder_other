@@ -14,10 +14,8 @@ class Baiduqianxi:
 
         browser = webdriver.ChromeOptions()
         browser.add_argument('--headless')
-        # browser = webdriver.Chrome(chrome_options=browser, executable_path='chromedriver.exe')
-        browser = webdriver.Chrome(chrome_options=browser, executable_path='google-chrome-stable_current_x86_64.rpm')
+        browser = webdriver.Chrome(chrome_options=browser, executable_path='chromedriver.exe')
         browser.set_window_size(1600, 900)
-
 
         for city in city_list:
             browser.get('http://qianxi.baidu.com/')
