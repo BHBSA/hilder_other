@@ -3,25 +3,23 @@ from selenium.webdriver.common.keys import Keys
 import time
 import datetime
 from lib.mongo import Mongo
-from city_list import city_list
+from .city_list import city_list
 
 
 class Baiduqianxi:
-    """
-        city_list : 全国所有城市
-    """
-    def __init__(self, city_list):
-        self.city_list = city_list
-
-    def get_baiduqianxi(self):
-        browser = webdriver.ChromeOptions()
-        browser.add_argument('--headless')
-        browser = webdriver.Chrome(chrome_options=browser, executable_path='chromedriver.exe')
-        browser.set_window_size(1600, 900)
+    @staticmethod
+    def get_baiduqianxi():
         m = Mongo('192.168.0.235', 27017, 'baiduqianxi', 'baiduqianxi')
         coll = m.get_collection_object()
 
-        for city in self.city_list:
+        browser = webdriver.ChromeOptions()
+        browser.add_argument('--headless')
+        # browser = webdriver.Chrome(chrome_options=browser, executable_path='chromedriver.exe')
+        browser = webdriver.Chrome(chrome_options=browser, executable_path='google-chrome-stable_current_x86_64.rpm')
+        browser.set_window_size(1600, 900)
+
+
+        for city in city_list:
             browser.get('http://qianxi.baidu.com/')
             try:
                 time.sleep(3)
@@ -64,5 +62,5 @@ class Baiduqianxi:
 
 
 if __name__ == '__main__':
-    baidu = Baiduqianxi(city_list)
+    baidu = Baiduqianxi()
     baidu.get_baiduqianxi()
