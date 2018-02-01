@@ -52,7 +52,8 @@ class Baiduqianxi:
                     'city': city,
                     'in': in_dict,
                     'out': out_dict,
-                    'datetime': datetime.datetime.now()
+                    'insert_time': datetime.datetime.now(),
+                    'date': int(str(datetime.date.today()).replace('-', ''))
                 })
             except Exception as e:
                 print(e)
