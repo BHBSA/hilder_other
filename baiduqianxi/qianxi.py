@@ -1,65 +1,68 @@
-from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
-import time
+import requests
+import re
+from city_list import city_list
 import datetime
 from lib.mongo import Mongo
-from .city_list import city_list
+from queue import Queue
 
 
 class Baiduqianxi:
-    @staticmethod
-    def get_baiduqianxi():
-        m = Mongo('192.168.0.235', 27017, 'baiduqianxi', 'baiduqianxi')
-        coll = m.get_collection_object()
+    m = Mongo('192.168.0.235', 27017, 'baiduqianxi', 'baiduqianxi_test')
+    coll = m.get_collection_object()
+    now_time = datetime.datetime.now()
+    today_int = int(now_time.strftime('%Y%m%d'))
+    q = Queue()
 
-        browser = webdriver.ChromeOptions()
-        browser.add_argument('--headless')
-        browser = webdriver.Chrome(chrome_options=browser, executable_path='chromedriver.exe')
-        browser.set_window_size(1600, 900)
+    def put_queue(self):
+        for city_name in city_list:
+            self.q.put(city_name)
 
-        for city in city_list:
-            browser.get('http://qianxi.baidu.com/')
+    def start_baiduqianxi(self):
+        count = 0
+        self.put_queue()
+        while not self.q.empty():
+            city_name = self.q.get()
             try:
-                time.sleep(3)
-                elem = browser.find_element_by_id('input_cityName')
-                elem.send_keys(city)
-                time.sleep(1)
-                browser.find_element_by_class_name('input-group-addon').click()
-                time.sleep(5)
-                in_data = browser.find_element_by_class_name('div_list_container')
-                in_info = in_data.text
-                print(in_info)
-                in_list = in_info.split('\n')
-                in_dict = {}
+                proxies = {
+                    'http': '192.168.0.90:4234'
+                }
+                type_ = 'migrate_in'
+                city = city_name
+                timeStr = str(self.today_int)
+                url = 'http://qianxi.baidu.com/api/city-migration.php?callback=abc&type=' + type_ + '&sort_by=low_index&limit=10&city_name=' + city + '&date_start=' + timeStr + '&date_end=' + timeStr
+                res_in = requests.get(url, proxies=proxies)
+                in_info = re.search(r'\[(.*?)\]', res_in.text).group()
+                in_list = eval(in_info)
+                in_all_list = []
                 for i in in_list:
-                    list_ = i.split(' ')
-                    city_name = list_[1].replace(city, '')
-                    number = list_[2].replace('％', '')
-                    in_dict[city_name] = number
-                print('---------')
-                browser.find_element_by_xpath('//a[@class="btn btn-default"]').click()
-                out_data = browser.find_element_by_class_name('div_list_container')
-                out_info = out_data.text
-                print(out_info)
-                out_list = out_info.split('\n')
-                out_dict = {}
+                    in_all_list.append(i)
+                type_ = 'migrate_out'
+                url = 'http://qianxi.baidu.com/api/city-migration.php?callback=abc&type=' + type_ + '&sort_by=low_index&limit=10&city_name=' + city + '&date_start=' + timeStr + '&date_end=' + timeStr
+                res_out = requests.get(url, proxies=proxies)
+                out_info = re.search(r'\[(.*?)\]', res_out.text).group()
+                out_list = eval(out_info)
+                out_all_list = []
                 for i in out_list:
-                    list_ = i.split(' ')
-                    city_name = list_[1].replace(city, '')
-                    number = list_[2].replace('％', '')
-                    out_dict[city_name] = number
-                coll.insert_one({
-                    'city': city,
-                    'in': in_dict,
-                    'out': out_dict,
+                    out_all_list.append(i)
+                count += 1
+                print(count, city_name)
+                data = {
+                    'city': city_name,
+                    'date': int(timeStr),
                     'insert_time': datetime.datetime.now(),
-                    'date': int(str(datetime.date.today()).replace('-', ''))
-                })
+                    'in': in_all_list,
+                    'out': out_all_list,
+                }
+                if not in_all_list and not in_all_list:
+                    print('in and out is null')
+                else:
+                    self.coll.insert_one(data)
             except Exception as e:
-                print(e)
-                print(city)
+                print('错误')
+                self.q.put(city_name)
 
 
 if __name__ == '__main__':
-    baidu = Baiduqianxi()
-    baidu.get_baiduqianxi()
+    b = Baiduqianxi()
+    while True:
+        b.start_baiduqianxi()

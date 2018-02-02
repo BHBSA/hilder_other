@@ -1,5 +1,8 @@
 from baiduqianxi.qianxi import Baiduqianxi
+import schedule
 
 if __name__ == '__main__':
     b = Baiduqianxi()
-    b.get_baiduqianxi()
+    schedule.every().day.at("12:00").do(b.start_baiduqianxi)
+    while True:
+        schedule.run_pending()
