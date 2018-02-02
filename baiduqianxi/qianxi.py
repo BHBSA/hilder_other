@@ -1,6 +1,10 @@
+"""
+百度迁徙
+requests
+"""
 import requests
 import re
-from city_list import city_list
+from .city_list import CITY_LIST
 import datetime
 from lib.mongo import Mongo
 from queue import Queue
@@ -13,13 +17,13 @@ class Baiduqianxi:
     today_int = int(now_time.strftime('%Y%m%d'))
     q = Queue()
 
-    def put_queue(self):
-        for city_name in city_list:
+    def put_in_queue(self):
+        for city_name in CITY_LIST:
             self.q.put(city_name)
 
-    def start_baiduqianxi(self):
+    def start_consume(self):
         count = 0
-        self.put_queue()
+        self.put_in_queue()
         while not self.q.empty():
             city_name = self.q.get()
             try:
@@ -60,9 +64,3 @@ class Baiduqianxi:
             except Exception as e:
                 print('错误')
                 self.q.put(city_name)
-
-
-if __name__ == '__main__':
-    b = Baiduqianxi()
-    while True:
-        b.start_baiduqianxi()

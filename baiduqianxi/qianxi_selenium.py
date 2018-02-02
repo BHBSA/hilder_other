@@ -1,9 +1,13 @@
+"""
+百度迁徙
+selenium+chrome
+"""
+
 from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
 import time
 import datetime
 from lib.mongo import Mongo
-from baiduqianxi.city_list import city_list
+from baiduqianxi.city_list import CITY_LIST
 
 
 class Baiduqianxi:
@@ -17,7 +21,7 @@ class Baiduqianxi:
         browser = webdriver.Chrome(chrome_options=browser, executable_path='chromedriver.exe')
         browser.set_window_size(1600, 900)
 
-        for city in city_list:
+        for city in CITY_LIST:
             browser.get('http://qianxi.baidu.com/')
             try:
                 time.sleep(3)
@@ -36,7 +40,7 @@ class Baiduqianxi:
                     city_name = list_[1].replace(city, '')
                     number = list_[2].replace('％', '')
                     in_dict[city_name] = number
-                print('---------')
+
                 browser.find_element_by_xpath('//a[@class="btn btn-default"]').click()
                 out_data = browser.find_element_by_class_name('div_list_container')
                 out_info = out_data.text
@@ -59,7 +63,3 @@ class Baiduqianxi:
                 print(e)
                 print(city)
         browser.close()
-
-if __name__ == '__main__':
-    baidu = Baiduqianxi()
-    baidu.get_baiduqianxi()
