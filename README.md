@@ -1,4 +1,9 @@
-零散脚本管理
+Speical and temporary scripy crawler
+=
+Baidu migration,url see <a href='http://renqi.baidu.com/qianxiearth/index.html'>baidu migration</a>
 
-百度迁徙抓取
-户型图需求
+python3.5
+
+Start project:
+
+python run.py
