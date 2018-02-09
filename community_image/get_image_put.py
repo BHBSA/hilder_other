@@ -4,6 +4,9 @@ import pika
 import json
 from bson.objectid import ObjectId
 from multiprocessing import Process
+from retry import retry
+import time
+
 
 def get_collection_object(host, port, db_name, collection_name):
     client = pymongo.MongoClient(host, port)
@@ -19,7 +22,6 @@ def connect_rabbit(host, queue):
     return channel
 
 
-
 m = get_collection_object('192.168.0.61', 27017, 'buildings', 'house_image_demo')
 url = 'http://open.fangjia.com/files/upload'
 
@@ -29,8 +31,10 @@ data = {
 }
 
 channel = connect_rabbit('192.168.0.235', 'image_stand')
+
+
 def put_in_queue():
-    coll = m.find_one({'_id':ObjectId('5a4c8d33c720b21b2025903e')})
+    coll = m.find_one({'_id': ObjectId('5a4c8d33c720b21b2025903e')})
     del coll['_id']
     channel.basic_publish(exchange='',
                           routing_key='image_stand_test',
@@ -38,9 +42,24 @@ def put_in_queue():
                           )
 
 
+# @retry(tries=3)
+# def call_request(url,files,data,img):
+#     try:
+#         time.sleep(1)
+#         reslut = requests.post(url=url, files=files, data=data)
+#         code = reslut.json()['code']
+#         if code is 200:
+#             res_json = reslut.json()
+#             link = res_json['result']['link']
+#             img['link'] = link
+#         else:
+#             print(reslut.json())
+#         return img
+#     except Exception as e:
+#         print('retry:',time.time())
+#         raise
 def callback(ch, method, properties, body):
     name = method.consumer_tag.split('.')[1]
-    print(name)
     body = json.loads(body.decode())
     image_list = body['image_list']
     community = body['community']
@@ -50,18 +69,21 @@ def callback(ch, method, properties, body):
         for i in image_list:
             img = i['img']
             response = requests.get(img)
+            if response.status_code is not 200:
+                print(response.status_code)
+                continue
             with open('D:/imagesss/{0}.png'.format(name), 'wb') as f:
                 f.write(response.content)
             files = {'file': open('D:/imagesss/{0}.png'.format(name), 'rb')}
             reslut = requests.post(url=url, files=files, data=data)
-            if reslut.json()['code'] is 200:
+            code = reslut.json()['code']
+            if code is 200:
                 res_json = reslut.json()
                 link = res_json['result']['link']
                 i['link'] = link
                 img_list.append(i)
             else:
-                print(reslut.json())
-                print(1/0)
+                print(1 / 0)
         m.update({'community': community}, {'$set': {'image_list': img_list}})
         ch.basic_ack(delivery_tag=method.delivery_tag)
     except Exception as e:
@@ -72,6 +94,7 @@ def callback(ch, method, properties, body):
                               )
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
+
 def consume_queue():
     channel.basic_qos(prefetch_count=1)
     channel.basic_consume(consumer_callback=callback, queue='image_stand')
@@ -81,5 +104,5 @@ def consume_queue():
 if __name__ == '__main__':
     # Process(target=consume_queue).start()
     #   put_in_queue()
-  for i in range(15):
-      Process(target=consume_queue).start()
+    for i in range(15):
+        Process(target=consume_queue).start()
