@@ -355,5 +355,5 @@ if __name__ == '__main__':
     # Thread(target=third_get).start()
     # Thread(target=forth_get).start()
     # Thread(target=fifth_get).start()
-    # fifth_get()
-    # second_get()
+    fifth_get()
+    second_get()
