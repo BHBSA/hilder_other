@@ -3,20 +3,164 @@ import re
 from country import country
 from dateutil import parser
 from lib.mongo import Mongo
+import random
 
 m = Mongo('192.168.0.235')
 connect = m.connect
 
+proxy = [{"http": "http://192.168.0.96:4234"},
+         {"http": "http://192.168.0.93:4234"},
+         {"http": "http://192.168.0.90:4234"},
+         {"http": "http://192.168.0.94:4234"},
+         {"http": "http://192.168.0.98:4234"},
+         {"http": "http://192.168.0.99:4234"},
+         {"http": "http://192.168.0.100:4234"},
+         {"http": "http://192.168.0.101:4234"},
+         {"http": "http://192.168.0.102:4234"},
+         {"http": "http://192.168.0.103:4234"}, ]
+
+
+class Detail:
+    def create_date(self, indexFrequency, start_year, start_mouth, end_year, ):
+        """
+
+        :return: ['from=2016-1&to=2017-1', 'from=2016-1&to=2017-1', 'from=2016-1&to=2017-1', 'from=2016-1&to=2017-1',]
+        """
+        """
+        根据开始时间分割年月日
+        """
+        if indexFrequency == '年':
+            print('年')
+            s = [str(start_year) + '-' + str(start_mouth)]
+            print(start_year, end_year)
+            while start_year < end_year:
+                start_year = start_year + 11
+                s.append(str(start_year) + '-' + str(start_mouth))
+            # print(s)
+        elif indexFrequency == '季':
+            print('季')
+            s = [str(start_year) + '-' + str(start_mouth)]
+            print(start_year, end_year)
+            while start_year < end_year:
+                start_year = start_year + 2
+                s.append(str(start_year) + '-' + str(start_mouth))
+            # print(s)
+        else:
+            print('月')
+            s = [str(start_year) + '-' + '1']
+            print(start_year, end_year)
+            while start_year < end_year:
+                start_year = start_year + 1
+                s.append(str(start_year) + '-' + '1')
+            complete_url_list = []
+            for i in range(0, len(s) - 1):
+                complete_url_list.append('from=' + s[i] + '&' + 'to=' + s[i] + '2')
+            print(complete_url_list)
+            return complete_url_list
+            # print(s)
+        # from=2016-1&to=2017-1
+        complete_url_list = []
+        for i in range(0, len(s) - 1):
+            complete_url_list.append('from=' + s[i] + '&' + 'to=' + s[i + 1])
+        print(complete_url_list)
+        return complete_url_list
+
+    def get_url(self):
+        collection = connect['test']['ecic']
+        for info in collection.find():
+            """
+            info :
+            {
+                "_id" : ObjectId("5ad8389685699237a0c8ae90"),
+                "indexUpdate" : "2018-03-28",
+                "indexFrequency" : "季",
+                "indexEnName" : "nominal-gdp",
+                "indexEnd" : "2017-12",
+                "url" : "https://www.ceicdata.com/zh-hans/indicator/united-states/nominal-gdp",
+                "indexStart" : "1947-03",
+                "indexName" : "名义国内生产总值",
+                "indexCategory" : "国民经济核算",
+                "indexUnit" : "百万美元",
+                "countryName" : "美国",
+                "countryEnName" : "united-states"
+            }
+            """
+            countryEnName = info['countryEnName']
+            indexEnName = info['indexEnName']
+
+            indexStart = info['indexStart']
+            indexEnd = info['indexEnd']
+            indexFrequency = info['indexFrequency']
+
+            start_year = int(indexStart.split('-')[0])
+            start_mouth = int(indexStart.split('-')[1])
+
+            end_year = int(indexEnd.split('-')[0])
+            end_mouth = int(indexEnd.split('-')[1])
+            # print(start_year, start_mouth, end_year, end_mouth)
+
+            url_list = self.create_date(indexFrequency, start_year, start_mouth, end_year, )
+
+            url = info['url']
+            res = requests.get(url=url, proxies=proxy[random.randint(0, 9)])
+            city_type = re.search('<img src="https://www.ceicdata.com/.*?/.*?/(.*?)/', res.content.decode(),
+                                  re.S | re.M).group(1)
+            for i in url_list:
+                url = 'https://www.ceicdata.com/datapage/charts/' + city_type + '?type=column&' + i + '&width=1500&height=700'
+                print(url)
+                res = requests.get(url=url, proxies=proxy[random.randint(0, 9)])
+                # print(res.content.decode())
+                self.parse_detail(res.content.decode(), url, countryEnName, indexEnName)
+            break
+
+    @staticmethod
+    def parse_detail(html, url, countryEnName, indexEnName):
+        data_info_list = re.search('<g class="highcharts-axis-labels highcharts-xaxis-labels ">(.*?)</g>', html,
+                                   re.S | re.M).group(1)
+        date_list = []
+        for i in re.findall('<tspan>(.*?)</tspan>', data_info_list, re.S | re.M):
+            date_list.append(i)
+
+        num_list = []
+        num_info_list = re.findall('<g class="highcharts-label highcharts-data-label(.*?)</g>', html, re.S | re.M)
+        for k in num_info_list:
+            value_ = re.search('<tspan .*?>(.*?)</tspan>', k, re.S | re.M).group(1)
+            num_list.append(value_)
+
+        if len(date_list) != len(num_list):
+            print('页面的数据和月份对应不上date_list={},num_list={}, url={},'.format(len(date_list), len(num_list), url))
+            return
+
+        for j in range(0, len(date_list)):
+            num = re.search('\d+', date_list[j], re.S | re.M).group(0)
+            list_time = date_list[j].split('\'')
+
+            """
+            判断是19世纪还是20世纪
+            """
+            if int(num) > 20:
+                date_list[j] = list_time[0] + '19' + list_time[1]
+            else:
+                date_list[j] = list_time[0] + '20' + list_time[1]
+            collection = connect['test']['State_indicators_details']
+            collection.insert_one({
+                'countryEnName': countryEnName,
+                'indexEnName': indexEnName,
+                'Date': parser.parse(date_list[j]).strftime('%Y-%m'),
+                'Value': num_list[j],
+            })
+
 
 class CEIC:
+    """
+    列表页面所有种类和信息
+    """
+
     def __init__(self):
         self.countries_url = 'https://www.ceicdata.com/zh-hans/countries'
-        self.proxy = {
-            'https': '192.168.0.90:4234'
-        }
 
     def crawler(self):
-        res = requests.get(url=self.countries_url, proxies=self.proxy)
+        res = requests.get(url=self.countries_url, proxies=proxy[random.randint(0, 9)])
         # print(res.content.decode())
         country_list = []
         for url in re.findall('<a href="(/zh-hans/country/.*?)"', res.content.decode(), re.S | re.M):
@@ -27,7 +171,7 @@ class CEIC:
 
     def crawler_list_page(self, url):
         print('url={}'.format(url))
-        html_str = requests.get(url, proxies=self.proxy).content.decode()
+        html_str = requests.get(url, proxies=proxy[random.randint(0, 9)]).content.decode()
         countryName = re.search('<h1 class="datapage-header">(.*?)</h1>', html_str, re.S | re.M).group(1)
         countryEnName = country[countryName]
         for info in re.findall('<tr class="datapage-table-row " >.*?</tr>', html_str, re.S | re.M):
@@ -45,11 +189,12 @@ class CEIC:
             indexUnit = re.search('data-th="单位".*?<p>(.*?)</p>', info, re.S | re.M).group(1)
             indexUpdate = re.search('范围.*?<small>于(.*?)更新</small>', info, re.S | re.M).group(1)
 
-            collection = connect['test']['ecic']
+            url = re.search('<a href="(.*?)"', info, re.S | re.M).group(1)
+
+            collection = connect['test']['State_indicators']
             collection.insert_one({
                 'countryName': countryName,
                 'countryEnName': countryEnName,
-
                 'indexCategory': indexCategory,
                 'indexEnName': indexEnName,
                 'indexName': indexName,
@@ -58,10 +203,7 @@ class CEIC:
                 'indexFrequency': indexFrequency,
                 'indexUnit': indexUnit,
                 'indexUpdate': indexUpdate,
+                'url': 'https://www.ceicdata.com' + url
             })
         print('{}城市已经结束'.format(countryName))
-
-
-if __name__ == '__main__':
-    c = CEIC()
-    c.crawler()
+        re.subn()
