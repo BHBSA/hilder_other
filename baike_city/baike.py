@@ -1,13 +1,18 @@
 import requests
 import urllib
 import re
-from baike_city.city_name import city
+from baike_city.city_name import city_list
 from lib.mongo import Mongo
 from datetime import datetime
+import yaml
+from lib.log import LogHandler
 
-m = Mongo('192.168.0.235', 27017, 'baike', 'baike')
-coll = m.get_collection_object()
-cities = city
+setting = yaml.load(open('config.yaml'))
+log = LogHandler('baiduqianxi')
+connect = Mongo(setting['baidubaike']['mongo']['host']).connect
+coll = connect[setting['baidubaike']['mongo']['db']][setting['baidubaike']['mongo']['collection']]
+
+
 headers = {
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
     'Accept-Encoding': 'gzip, deflate, br',
@@ -18,8 +23,10 @@ headers = {
     'Host': 'baike.baidu.com',
     'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64)'
 }
-def baike():
-    for city in cities:
+
+
+def crawler_baike():
+    for city in city_list:
         print(city)
         i = urllib.parse.quote(city)
         url = 'https://baike.baidu.com/item/' + i
@@ -112,7 +119,8 @@ def baike():
 
         # 方言
         try:
-            localism = re.search(r'方&nbsp;&nbsp;&nbsp;&nbsp;言</dt>.*?<dd.*?>(.*?)</dd>', html, re.S | re.M).group(1).strip()
+            localism = re.search(r'方&nbsp;&nbsp;&nbsp;&nbsp;言</dt>.*?<dd.*?>(.*?)</dd>', html, re.S | re.M).group(
+                1).strip()
             localism = re.sub('<[^>]+>', '', localism).strip()
         except Exception as e:
             localism = None
@@ -133,7 +141,8 @@ def baike():
 
         # 机场
         try:
-            airport = re.search(r'机&nbsp;&nbsp;&nbsp;&nbsp;场</dt>.*?<dd.*?>(.*?)</dd>', html, re.S | re.M).group(1).strip()
+            airport = re.search(r'机&nbsp;&nbsp;&nbsp;&nbsp;场</dt>.*?<dd.*?>(.*?)</dd>', html, re.S | re.M).group(
+                1).strip()
             airport = re.sub('<[^>]+>', '', airport).strip()
         except Exception as e:
             airport = None
@@ -269,4 +278,4 @@ def baike():
                 pass
         coll.update_one({'city': city}, {'$set': data}, True)
         # coll.insert_one(data)
-        print(data)
+        log.info(data)

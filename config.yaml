@@ -5,24 +5,23 @@ baiduqianxi:
         port: 27017
         db: baiduqianxi
         collection: baiduqianxi
+baidubaike:
+    mongo:
+        host: 192.168.0.235
+        port: 27017
+        db: baike
+        collection: baike_test
 
-
-# online
+## online
 #baiduqianxi:
 #    mongo:
 #        host: 192.168.0.235
 #        port: 27017
 #        db: baiduqianxi
 #        collection: baiduqianxi_test
-#baike:
+#baidubaike:
 #    mongo:
-#        host: 192.168.0.1
+#        host: 192.168.0.235
 #        port: 27017
-#        db: qianxi
-#        collection: baidu qianxi
-#ceic:
-#    mongo:
-#        host: 192.168.0.1
-#        port: 27017
-#        db: qianxi
-#        collection: baidu qianxi
+#        db: baike
+#        collection: baike
