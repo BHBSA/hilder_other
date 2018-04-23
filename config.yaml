@@ -11,8 +11,16 @@ baidubaike:
         port: 27017
         db: baike
         collection: baike_test
+CEIC:
+    mongo:
+        host: 192.168.0.235
+        port: 27017
+        db: CEIC
+        State_indicators: State_indicators_test
+        State_indicators_details: State_indicators_details_test
 
-## online
+
+# online
 #baiduqianxi:
 #    mongo:
 #        host: 192.168.0.235
@@ -25,3 +33,10 @@ baidubaike:
 #        port: 27017
 #        db: baike
 #        collection: baike
+#CEIC:
+#    mongo:
+#        host: 192.168.0.235
+#        port: 27017
+#        db: CEIC
+#        State_indicators: State_indicators
+#        State_indicators_details: State_indicators_details
