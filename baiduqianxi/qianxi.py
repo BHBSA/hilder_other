@@ -8,11 +8,18 @@ from .city_list import CITY_LIST
 import datetime
 from lib.mongo import Mongo
 from queue import Queue
+from lib.log import LogHandler
+import yaml
+
+setting = yaml.load(open('config.yaml'))
+
+log = LogHandler('baiduqianxi')
 
 
 class Baiduqianxi:
-    m = Mongo('192.168.0.235', 27017, 'baiduqianxi', 'baiduqianxi_test')
-    coll = m.get_collection_object()
+    connect = Mongo(setting['baiduqianxi']['mongo']['host']).connect
+    coll = connect[setting['baiduqianxi']['mongo']['db']][setting['baiduqianxi']['mongo']['collection']]
+
     now_time = datetime.datetime.now()
     today_int = int(now_time.strftime('%Y%m%d'))
     q = Queue()
@@ -49,7 +56,7 @@ class Baiduqianxi:
                 for i in out_list:
                     out_all_list.append(i)
                 count += 1
-                print(count, city_name)
+                log.debug(count, city_name)
                 data = {
                     'city': city_name,
                     'date': int(timeStr),
@@ -58,9 +65,10 @@ class Baiduqianxi:
                     'out': out_all_list,
                 }
                 if not in_all_list and not in_all_list:
-                    print('in and out is null')
+                    log.error('迁入和迁出为空',city)
                 else:
+                    log.debug('插入一条数据', data)
                     self.coll.insert_one(data)
             except Exception as e:
-                print('错误')
+                log.error('错误', e)
                 self.q.put(city_name)
