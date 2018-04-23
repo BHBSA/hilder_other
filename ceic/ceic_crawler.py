@@ -1,12 +1,22 @@
+# todo update
+
 import requests
 import re
-from country import country
+from ceic.country import country
 from dateutil import parser
 from lib.mongo import Mongo
 import random
+import yaml
+from lib.log import LogHandler
 
 m = Mongo('192.168.0.235')
 connect = m.connect
+
+setting = yaml.load(open('config.yaml'))
+db_name = setting['CEIC']['mongo']['db']
+State_indicators_name = setting['CEIC']['mongo']['State_indicators']
+State_indicators_details_name = setting['CEIC']['mongo']['State_indicators_details']
+log = LogHandler('CEIC')
 
 proxy = [{"http": "http://192.168.0.96:4234"},
          {"http": "http://192.168.0.93:4234"},
@@ -30,43 +40,44 @@ class Detail:
         根据开始时间分割年月日
         """
         if indexFrequency == '年':
-            print('年')
+            # print('年')
             s = [str(start_year) + '-' + str(start_mouth)]
-            print(start_year, end_year)
+            # print(start_year, end_year)
             while start_year < end_year:
                 start_year = start_year + 11
                 s.append(str(start_year) + '-' + str(start_mouth))
             # print(s)
         elif indexFrequency == '季':
-            print('季')
+            # print('季')
             s = [str(start_year) + '-' + str(start_mouth)]
-            print(start_year, end_year)
+            # print(start_year, end_year)
             while start_year < end_year:
                 start_year = start_year + 2
                 s.append(str(start_year) + '-' + str(start_mouth))
             # print(s)
         else:
-            print('月')
+            # print('月')
             s = [str(start_year) + '-' + '1']
-            print(start_year, end_year)
+            # print(start_year, end_year)
             while start_year < end_year:
                 start_year = start_year + 1
                 s.append(str(start_year) + '-' + '1')
             complete_url_list = []
             for i in range(0, len(s) - 1):
                 complete_url_list.append('from=' + s[i] + '&' + 'to=' + s[i] + '2')
-            print(complete_url_list)
+            # log.info('complete_url_list', complete_url_list)
             return complete_url_list
             # print(s)
         # from=2016-1&to=2017-1
         complete_url_list = []
         for i in range(0, len(s) - 1):
             complete_url_list.append('from=' + s[i] + '&' + 'to=' + s[i + 1])
-        print(complete_url_list)
+        log.info('complete_url_list', complete_url_list)
         return complete_url_list
 
     def get_url(self):
-        collection = connect['test']['ecic']
+        # collection = connect['test']['ecic']
+        collection = connect[db_name][State_indicators_name]
         for info in collection.find():
             """
             info :
@@ -102,13 +113,30 @@ class Detail:
             url_list = self.create_date(indexFrequency, start_year, start_mouth, end_year, )
 
             url = info['url']
-            res = requests.get(url=url, proxies=proxy[random.randint(0, 9)])
+
+            while True:
+                try:
+                    proxy_ = proxy[random.randint(0, 9)]
+                    res = requests.get(url=url, proxies=proxy_)
+                    if res.status_code == 200:
+                        break
+                except Exception as e:
+                    log.info('请求出错，url={}，proxy={}，'.format(url, proxy_), e)
             city_type = re.search('<img src="https://www.ceicdata.com/.*?/.*?/(.*?)/', res.content.decode(),
                                   re.S | re.M).group(1)
             for i in url_list:
                 url = 'https://www.ceicdata.com/datapage/charts/' + city_type + '?type=column&' + i + '&width=1500&height=700'
-                print(url)
-                res = requests.get(url=url, proxies=proxy[random.randint(0, 9)])
+                # print(url)
+
+                while True:
+                    try:
+                        proxy_ = proxy[random.randint(0, 9)]
+                        res = requests.get(url=url, proxies=proxy_)
+                        if res.status_code == 200:
+                            break
+                    except Exception as e:
+                        log.info('请求出错，url={}，proxy={}，'.format(url, proxy_), e)
+
                 # print(res.content.decode())
                 self.parse_detail(res.content.decode(), url, countryEnName, indexEnName)
             break
@@ -128,7 +156,7 @@ class Detail:
             num_list.append(value_)
 
         if len(date_list) != len(num_list):
-            print('页面的数据和月份对应不上date_list={},num_list={}, url={},'.format(len(date_list), len(num_list), url))
+            log.error('页面的数据和月份对应不上date_list={},num_list={}, url={},'.format(len(date_list), len(num_list), url))
             return
 
         for j in range(0, len(date_list)):
@@ -142,7 +170,8 @@ class Detail:
                 date_list[j] = list_time[0] + '19' + list_time[1]
             else:
                 date_list[j] = list_time[0] + '20' + list_time[1]
-            collection = connect['test']['State_indicators_details']
+            # collection = connect['test']['State_indicators_details']
+            collection = connect[db_name][State_indicators_details_name]
             collection.insert_one({
                 'countryEnName': countryEnName,
                 'indexEnName': indexEnName,
@@ -160,7 +189,16 @@ class CEIC:
         self.countries_url = 'https://www.ceicdata.com/zh-hans/countries'
 
     def crawler(self):
-        res = requests.get(url=self.countries_url, proxies=proxy[random.randint(0, 9)])
+
+        while True:
+            try:
+                proxy_ = proxy[random.randint(0, 9)]
+                res = requests.get(url=self.countries_url, proxies=proxy_)
+                if res.status_code == 200:
+                    break
+            except Exception as e:
+                log.info('请求出错，url={}，proxy={}，'.format(self.countries_url, proxy_), e)
+
         # print(res.content.decode())
         country_list = []
         for url in re.findall('<a href="(/zh-hans/country/.*?)"', res.content.decode(), re.S | re.M):
@@ -170,8 +208,16 @@ class CEIC:
             self.crawler_list_page(i)
 
     def crawler_list_page(self, url):
-        print('url={}'.format(url))
-        html_str = requests.get(url, proxies=proxy[random.randint(0, 9)]).content.decode()
+        # print('url={}'.format(url))
+        while True:
+            try:
+                proxy_ = proxy[random.randint(0, 9)]
+                res = requests.get(url=url, proxies=proxy_)
+                if res.status_code == 200:
+                    break
+            except Exception as e:
+                log.info('请求出错，url={}，proxy={}，'.format(self.countries_url, proxy_), e)
+        html_str = res.content.decode()
         countryName = re.search('<h1 class="datapage-header">(.*?)</h1>', html_str, re.S | re.M).group(1)
         countryEnName = country[countryName]
         for info in re.findall('<tr class="datapage-table-row " >.*?</tr>', html_str, re.S | re.M):
@@ -191,7 +237,8 @@ class CEIC:
 
             url = re.search('<a href="(.*?)"', info, re.S | re.M).group(1)
 
-            collection = connect['test']['State_indicators']
+            # collection = connect['test']['State_indicators']
+            collection = connect[db_name][State_indicators_name]
             collection.insert_one({
                 'countryName': countryName,
                 'countryEnName': countryEnName,
@@ -205,5 +252,4 @@ class CEIC:
                 'indexUpdate': indexUpdate,
                 'url': 'https://www.ceicdata.com' + url
             })
-        print('{}城市已经结束'.format(countryName))
-        re.subn()
+        log.info('{}国家已经结束'.format(countryName))
