@@ -8,7 +8,7 @@ import yaml
 from lib.log import LogHandler
 
 setting = yaml.load(open('config.yaml'))
-log = LogHandler('baiduqianxi')
+log = LogHandler('baidubaike')
 connect = Mongo(setting['baidubaike']['mongo']['host']).connect
 coll = connect[setting['baidubaike']['mongo']['db']][setting['baidubaike']['mongo']['collection']]
 
