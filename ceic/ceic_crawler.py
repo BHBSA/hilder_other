@@ -72,7 +72,7 @@ class Detail:
         complete_url_list = []
         for i in range(0, len(s) - 1):
             complete_url_list.append('from=' + s[i] + '&' + 'to=' + s[i + 1])
-        log.info('complete_url_list', complete_url_list)
+        # log.info('complete_url_list', complete_url_list)
         return complete_url_list
 
     def get_url(self):
@@ -96,7 +96,9 @@ class Detail:
                 "countryEnName" : "united-states"
             }
             """
+
             countryEnName = info['countryEnName']
+            # print(countryEnName)
             indexEnName = info['indexEnName']
 
             indexStart = info['indexStart']
@@ -139,7 +141,6 @@ class Detail:
 
                 # print(res.content.decode())
                 self.parse_detail(res.content.decode(), url, countryEnName, indexEnName)
-            break
 
     @staticmethod
     def parse_detail(html, url, countryEnName, indexEnName):
@@ -158,26 +159,33 @@ class Detail:
         if len(date_list) != len(num_list):
             log.error('页面的数据和月份对应不上date_list={},num_list={}, url={},'.format(len(date_list), len(num_list), url))
             return
+        # if len(date_list) or len(num_list) == 0:
+        #     log.error('date_list=0,num_list=0, url={},'.format(url))
+        #     return
 
         for j in range(0, len(date_list)):
-            num = re.search('\d+', date_list[j], re.S | re.M).group(0)
-            list_time = date_list[j].split('\'')
+            try:
+                num = re.search('\d+', date_list[j], re.S | re.M).group(0)
+                list_time = date_list[j].split('\'')
 
-            """
-            判断是19世纪还是20世纪
-            """
-            if int(num) > 20:
-                date_list[j] = list_time[0] + '19' + list_time[1]
-            else:
-                date_list[j] = list_time[0] + '20' + list_time[1]
-            # collection = connect['test']['State_indicators_details']
-            collection = connect[db_name][State_indicators_details_name]
-            collection.insert_one({
-                'countryEnName': countryEnName,
-                'indexEnName': indexEnName,
-                'Date': parser.parse(date_list[j]).strftime('%Y-%m'),
-                'Value': num_list[j],
-            })
+                """
+                判断是19世纪还是20世纪
+                """
+                if int(num) > 20:
+                    date_list[j] = list_time[0] + '19' + list_time[1]
+                else:
+                    date_list[j] = list_time[0] + '20' + list_time[1]
+                # collection = connect['test']['State_indicators_details']
+                collection = connect[db_name][State_indicators_details_name]
+                collection.insert_one({
+                    'countryEnName': countryEnName,
+                    'indexEnName': indexEnName,
+                    'Date': parser.parse(date_list[j]).strftime('%Y-%m'),
+                    'Value': num_list[j],
+                })
+                log.info('{}城市详情入库成功,indexEnName={}'.format(countryEnName, indexEnName))
+            except Exception as e:
+                log.error(e)
 
 
 class CEIC:
