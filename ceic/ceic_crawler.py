@@ -18,6 +18,17 @@ State_indicators_name = setting['CEIC']['mongo']['State_indicators']
 State_indicators_details_name = setting['CEIC']['mongo']['State_indicators_details']
 log = LogHandler('CEIC')
 
+proxy = [{"https": "https://192.168.0.96:4234"},
+         {"https": "https://192.168.0.93:4234"},
+         {"https": "https://192.168.0.90:4234"},
+         {"https": "https://192.168.0.94:4234"},
+         {"https": "https://192.168.0.98:4234"},
+         {"https": "https://192.168.0.99:4234"},
+         {"https": "https://192.168.0.100:4234"},
+         {"https": "https://192.168.0.101:4234"},
+         {"https": "https://192.168.0.102:4234"},
+         {"https": "https://192.168.0.103:4234"}, ]
+
 
 class CEIC:
     """

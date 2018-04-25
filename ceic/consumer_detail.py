@@ -22,18 +22,7 @@ channel = r.get_channel()
 queue = setting['CEIC']['rabbit']['queue']
 channel.queue_declare(queue=queue)
 
-log = LogHandler('CEIC')
-
-Ips = ["192.168.0.96:4234",
-       "192.168.0.93:4234",
-       "192.168.0.90:4234",
-       "192.168.0.94:4234",
-       "192.168.0.98:4234",
-       "192.168.0.99:4234",
-       "192.168.0.100:4234",
-       "192.168.0.101:4234",
-       "192.168.0.102:4234",
-       "192.168.0.103:4234", ]
+log = LogHandler('ceic_detail')
 
 
 class Consumer(object):
@@ -44,7 +33,7 @@ class Consumer(object):
         countryEnName = body['countryEnName']
         indexEnName = body['indexEnName']
         while True:
-            proxy_ = {'http': ip}
+            proxy_ = {'https': ip}
             try:
                 res = requests.get(url=url, proxies=proxy_)
                 if res.status_code == 200:
