@@ -8,25 +8,26 @@ import yaml
 from lib.log import LogHandler
 from lib.rabbitmq import Rabbit
 
-proxy = [{"http": "http://192.168.0.96:4234"},
-         {"http": "http://192.168.0.93:4234"},
-         {"http": "http://192.168.0.90:4234"},
-         {"http": "http://192.168.0.94:4234"},
-         {"http": "http://192.168.0.98:4234"},
-         {"http": "http://192.168.0.99:4234"},
-         {"http": "http://192.168.0.100:4234"},
-         {"http": "http://192.168.0.101:4234"},
-         {"http": "http://192.168.0.102:4234"},
-         {"http": "http://192.168.0.103:4234"}, ]
+proxy = [{"https": "http://192.168.0.96:4234"},
+         {"https": "http://192.168.0.93:4234"},
+         {"https": "http://192.168.0.90:4234"},
+         {"https": "http://192.168.0.94:4234"},
+         {"https": "http://192.168.0.98:4234"},
+         {"https": "http://192.168.0.99:4234"},
+         {"https": "http://192.168.0.100:4234"},
+         {"https": "http://192.168.0.101:4234"},
+         {"https": "http://192.168.0.102:4234"},
+         {"https": "http://192.168.0.103:4234"}, ]
 
 m = Mongo('192.168.0.235')
 connect = m.connect
 
 setting = yaml.load(open('config.yaml'))
+
 db_name = setting['CEIC']['mongo']['db']
 State_indicators_name = setting['CEIC']['mongo']['State_indicators']
 State_indicators_details_name = setting['CEIC']['mongo']['State_indicators_details']
-log = LogHandler('CEIC')
+log = LogHandler('ceic_detail')
 
 r = Rabbit(setting['CEIC']['rabbit']['host'], setting['CEIC']['rabbit']['port'])
 channel = r.get_channel()
