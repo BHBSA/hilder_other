@@ -12,7 +12,6 @@ log = LogHandler('baidubaike')
 connect = Mongo(setting['baidubaike']['mongo']['host']).connect
 coll = connect[setting['baidubaike']['mongo']['db']][setting['baidubaike']['mongo']['collection']]
 
-
 headers = {
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
     'Accept-Encoding': 'gzip, deflate, br',
@@ -49,7 +48,8 @@ def crawler_baike():
 
         # 别名
         try:
-            alias = re.search(r'别&nbsp;&nbsp;&nbsp;&nbsp;名.*?<dd.*?>(.*?)</dd>', html, re.S | re.M).group(1).strip()
+            alias = re.search(r'别&nbsp;&nbsp;&nbsp;&nbsp;名</dt>.*?<dd.*?>(.*?)</dd>', html, re.S | re.M).group(
+                1).strip()
             alias = re.sub('<[^>]+>', '', alias).strip()
         except Exception as e:
             alias = None
@@ -112,7 +112,8 @@ def crawler_baike():
 
         # 人口
         try:
-            population = re.search(r'人&nbsp;&nbsp;&nbsp;&nbsp;口.*?<dd.*?>(.*?)<', html, re.S | re.M).group(1).strip()
+            population = re.search(r'人&nbsp;&nbsp;&nbsp;&nbsp;口</dt>.*?<dd.*?>(.*?)<', html, re.S | re.M).group(
+                1).strip()
             population = re.sub('<[^>]+>', '', population).strip()
         except Exception as e:
             population = None
@@ -208,7 +209,7 @@ def crawler_baike():
 
         # 市长
         try:
-            mayor = re.search('市&nbsp;&nbsp;&nbsp;&nbsp;长.*?<dd.*?>(.*?)</dd>', html, re.S | re.M).group(1)
+            mayor = re.search('市&nbsp;&nbsp;&nbsp;&nbsp;长</dt>.*?<dd.*?>(.*?)</dd>', html, re.S | re.M).group(1)
             mayor = re.sub('<[^>]+>', '', mayor).strip()
         except Exception as e:
             mayor = None
@@ -220,19 +221,19 @@ def crawler_baike():
             administrative_code = None
         # 城市精神
         try:
-            city_spirit = re.search('城市精神<.*?<dd.*?>(.*?)</dd>', html, re.S | re.M).group(1).strip()
+            city_spirit = re.search('城市精神</dt>.*?<dd.*?>(.*?)</dd>', html, re.S | re.M).group(1).strip()
             city_spirit = re.sub('<[^>]+>', '', city_spirit).strip()
         except Exception as e:
             city_spirit = None
         # 人类发展指数
         try:
-            human_development_index = re.search('人类发展指数<.*?<dd.*?>(.*?)</dd>', html, re.S | re.M).group(1).strip()
+            human_development_index = re.search('人类发展指数</dt>.*?<dd.*?>(.*?)</dd>', html, re.S | re.M).group(1).strip()
             human_development_index = re.sub('<[^>]+>', '', human_development_index).strip()
         except Exception as e:
             human_development_index = None
         # 城市简称
         try:
-            city_abbreviation = re.search('城市简称.*?<dd.*?>(.*?)</dd>', html, re.S | re.M).group(1).strip()
+            city_abbreviation = re.search('城市简称</dt>.*?<dd.*?>(.*?)</dd>', html, re.S | re.M).group(1).strip()
             city_abbreviation = re.sub('<[^>]+>', '', city_abbreviation).strip()
         except Exception as e:
             city_abbreviation = None
@@ -276,6 +277,7 @@ def crawler_baike():
                 data[i] = re.sub('\[\d+\]', '', data[i])
             except Exception as e:
                 pass
+        print(data)
         coll.update_one({'city': city}, {'$set': data}, True)
-        # coll.insert_one(data)
-        log.info(data)
+        # log.info(data)
+
