@@ -6,6 +6,7 @@ from lib.mongo import Mongo
 from datetime import datetime
 import yaml
 from lib.log import LogHandler
+from lib.standardization import standard_city
 
 setting = yaml.load(open('config.yaml'))
 log = LogHandler('baidubaike')
@@ -176,7 +177,7 @@ def crawler_baike():
             GNPP = None
         # 人均支配收入（Per capita income）
         try:
-            per_capita_income = re.search(r'人均支配收入</dt>.*?<dd.*?>(.*?)<sup', html, re.S | re.M).group(1).strip()
+            per_capita_income = re.search(r'人均支配收入</dt>.*?<dd.*?>(.*?)</dd', html, re.S | re.M).group(1).strip()
             per_capita_income = re.sub('<[^>]+>', '', per_capita_income).strip()
         except Exception as e:
             per_capita_income = None
@@ -202,7 +203,35 @@ def crawler_baike():
             were_flower = None
         # 著名高校
         try:
-            famous_universities = re.search(r'著名高校</dt>.*?<dd.*?>(.*?)</dd>', html, re.S | re.M).group(1).strip()
+            famous_universities = re.search(r'著名高校</dt>.*?<dd.*?>(.*?)</dd>', html, re.S | re.M)
+            if not famous_universities:
+                famous_universities = re.search(r'学&nbsp;&nbsp;&nbsp;&nbsp;校</dt>.*?<dd.*?>(.*?)</dd>', html,
+                                                re.S | re.M)
+            if not famous_universities:
+                famous_universities = re.search(r'高等院校</dt>.*?<dd.*?>(.*?)</dd>', html,
+                                                re.S | re.M)
+            if not famous_universities:
+                famous_universities = re.search(r'重点高校</dt>.*?<dd.*?>(.*?)</dd>', html,
+                                                re.S | re.M)
+            if not famous_universities:
+                famous_universities = re.search(r'高等学府</dt>.*?<dd.*?>(.*?)</dd>', html,
+                                                re.S | re.M)
+            if not famous_universities:
+                famous_universities = re.search(r'著名学府</dt>.*?<dd.*?>(.*?)</dd>', html,
+                                                re.S | re.M)
+            if not famous_universities:
+                famous_universities = re.search(r'高&nbsp;&nbsp;&nbsp;&nbsp;校</dt>.*?<dd.*?>(.*?)</dd>', html,
+                                                re.S | re.M)
+            if not famous_universities:
+                famous_universities = re.search(r'主要高校</dt>.*?<dd.*?>(.*?)</dd>', html,
+                                                re.S | re.M)
+            if not famous_universities:
+                famous_universities = re.search(r'大&nbsp;&nbsp;&nbsp;&nbsp;学</dt>.*?<dd.*?>(.*?)</dd>', html,
+                                                re.S | re.M)
+            if not famous_universities:
+                famous_universities = re.search(r'知名高校</dt>.*?<dd.*?>(.*?)</dd>', html,
+                                                re.S | re.M)
+            famous_universities = famous_universities.group(1).strip()
             famous_universities = re.sub('<[^>]+>', '', famous_universities).strip()
         except Exception as e:
             famous_universities = None
@@ -237,6 +266,9 @@ def crawler_baike():
             city_abbreviation = re.sub('<[^>]+>', '', city_abbreviation).strip()
         except Exception as e:
             city_abbreviation = None
+        is_true, city = standard_city(city)
+        if not is_true:
+            print(city)
         data = {
             'chinese_name': chinese_name,
             'foreign_names': foreign_names,
@@ -281,3 +313,6 @@ def crawler_baike():
         coll.update_one({'city': city}, {'$set': data}, True)
         # log.info(data)
 
+
+if __name__ == '__main__':
+    crawler_baike()
