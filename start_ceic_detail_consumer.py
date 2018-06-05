@@ -13,5 +13,6 @@ if __name__ == '__main__':
            "192.168.0.102:4234",
            "192.168.0.103:4234", ]
     c = Consumer()
+    # c.consume_start("192.168.0.96:4234")
     for i in ips:
         Process(target=c.consume_start, args=(i,)).start()

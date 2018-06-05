@@ -1,5 +1,3 @@
-# todo update
-
 import requests
 import re
 from ceic.country import country

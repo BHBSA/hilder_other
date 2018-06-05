@@ -21,7 +21,6 @@ r = Rabbit(setting['CEIC']['rabbit']['host'], setting['CEIC']['rabbit']['port'])
 channel = r.get_channel()
 queue = setting['CEIC']['rabbit']['queue']
 channel.queue_declare(queue=queue)
-
 log = LogHandler('ceic_detail')
 
 
@@ -38,10 +37,15 @@ class Consumer(object):
                 res = requests.get(url=url, proxies=proxy_)
                 if res.status_code == 200:
                     break
+                if res.status_code == 404:
+                    print('404')
+                    return
             except Exception as e:
-                log.info('请求出错，url={}，proxy={}，'.format(url, proxy_), e)
+                print('请求出错，url={}，proxy={}，'.format(url, proxy_), e)
+                # log.info('请求出错，url={}，proxy={}，'.format(url, proxy_), e)
         self.parse_detail(res.content.decode(), url, countryEnName, indexEnName)
         ch.basic_ack(delivery_tag=method.delivery_tag)
+
 
     def parse_detail(self, html, url, countryEnName, indexEnName):
         data_info_list = re.search('<g class="highcharts-axis-labels highcharts-xaxis-labels ">(.*?)</g>', html,
@@ -57,7 +61,8 @@ class Consumer(object):
             num_list.append(value_)
 
         if len(date_list) != len(num_list):
-            log.error('页面的数据和月份对应不上date_list={},num_list={}, url={},'.format(len(date_list), len(num_list), url))
+            # log.error('页面的数据和月份对应不上date_list={},num_list={}, url={},'.format(len(date_list), len(num_list), url))
+            print('页面的数据和月份对应不上date_list={},num_list={}, url={},'.format(len(date_list), len(num_list), url))
             return
         # if len(date_list) or len(num_list) == 0:
         #     log.error('date_list=0,num_list=0, url={},'.format(url))
@@ -85,9 +90,11 @@ class Consumer(object):
                 }
                 collection.update_one({'countryEnName': countryEnName, 'indexEnName': indexEnName,
                                        'Date': parser.parse(date_list[j]).strftime('%Y-%m')}, {'$set': data}, True)
-                log.info('{}城市详情入库成功,indexEnName={}'.format(countryEnName, indexEnName))
+                # log.info('{}城市详情入库成功,indexEnName={}'.format(countryEnName, indexEnName))
+                print('{}城市详情入库成功,indexEnName={}'.format(countryEnName, indexEnName))
             except Exception as e:
-                log.error(e)
+                print(e)
+                # log.error(e)
 
     def consume_start(self, ip):
         channel.basic_qos(prefetch_count=1)

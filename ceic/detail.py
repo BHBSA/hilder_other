@@ -30,9 +30,6 @@ State_indicators_details_name = setting['CEIC']['mongo']['State_indicators_detai
 log = LogHandler('ceic_detail')
 
 r = Rabbit(setting['CEIC']['rabbit']['host'], setting['CEIC']['rabbit']['port'])
-channel = r.get_channel()
-queue = setting['CEIC']['rabbit']['queue']
-channel.queue_declare(queue=queue)
 
 
 class Detail:
@@ -81,7 +78,8 @@ class Detail:
         return complete_url_list
 
     def get_url(self):
-        # collection = connect['test']['ecic']
+        # print(id(r))
+        # return
         collection = connect[db_name][State_indicators_name]
         for info in collection.find():
             """
@@ -128,10 +126,16 @@ class Detail:
                     if res.status_code == 200:
                         break
                 except Exception as e:
-                    log.info('请求出错，url={}，proxy={}，'.format(url, proxy_), e)
+                    print('请求出错，url={}，proxy={}，'.format(url, proxy_), e)
+                    # log.info('请求出错，url={}，proxy={}，'.format(url, proxy_), e)
             city_type = re.search('<img src="https://www.ceicdata.com/.*?/.*?/(.*?)/', res.content.decode(),
                                   re.S | re.M).group(1)
             for i in url_list:
+                channel = r.get_channel()
+                queue = setting['CEIC']['rabbit']['queue']
+                print(r)
+                channel.queue_declare(queue=queue)
+
                 url = 'https://www.ceicdata.com/datapage/charts/' + city_type + '?type=column&' + i + '&width=1500&height=700'
                 # print(url)
                 body = {
@@ -142,5 +146,7 @@ class Detail:
                 channel.basic_publish(exchange='',
                                       routing_key=queue,
                                       body=json.dumps(body))
-                log.info('url放入队列成功{}'.format(body))
+                print('url放入队列成功{}'.format(body))
+                channel.close()
+                # log.info('url放入队列成功{}'.format(body))
 
