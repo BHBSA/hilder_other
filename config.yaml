@@ -1,38 +1,38 @@
 # local
 baiduqianxi:
     mongo:
-        host: 192.168.0.235
+        host: 114.80.150.196
         port: 27017
         db: baiduqianxi
-        collection: baiduqianxi
+        collection: baiduqianxi_test
 baidubaike:
     mongo:
-        host: 192.168.0.235
+        host: 114.80.150.196
         port: 27017
         db: baike
         collection: baike_test
 CEIC:
     mongo:
-        host: 192.168.0.235
+        host: 114.80.150.196
         port: 27017
         db: CEIC
         State_indicators: State_indicators_test
         State_indicators_details: State_indicators_details_test
     rabbit:
-        host: 192.168.0.235
+        host: 114.80.150.196
         port: 5673
         queue: ceic_detail_url
-old_county:
-    mongo:
-        host: 192.168.0.235
-        port: 27017
-        db: old_county
-        collection: burg_name
+#old_county:
+#    mongo:
+#        host: 192.168.0.235
+#        port: 27017
+#        db: old_county
+#        collection: burg_name
 
 # online
 #baiduqianxi:
 #    mongo:
-#        host: 192.168.0.235
+#        host: 114.80.150.196
 #        port: 27017
 #        db: baiduqianxi
 #        collection: baiduqianxi
