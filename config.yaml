@@ -38,10 +38,10 @@ CEIC:
 #        collection: baiduqianxi
 #baidubaike:
 #    mongo:
-#        host: 192.168.0.235
+#        host: 192.168.0.136
 #        port: 27017
-#        db: baike
-#        collection: baike_test
+#        db: fangjia_youfang
+#        collection: baike
 #CEIC:
 #    mongo:
 #        host: 192.168.0.235
