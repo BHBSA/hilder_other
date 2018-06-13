@@ -1,10 +1,10 @@
 # local
 baiduqianxi:
     mongo:
-        host: 192.168.0.235
+        host: 114.80.150.196
         port: 27017
-        db: baiduqianxi
-        collection: baiduqianxi
+        db: baiduqianxi_test
+        collection: baiduqianxi_test
 baidubaike:
     mongo:
         host: 192.168.0.235
