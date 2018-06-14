@@ -1,16 +1,16 @@
 # local
-#baiduqianxi:
-#    mongo:
-#        host: 114.80.150.196
-#        port: 27017
-#        db: baiduqianxi_test
-#        collection: baiduqianxi_test
-#baidubaike:
-#    mongo:
-#        host: 114.80.150.196
-#        port: 27017
-#        db: baike
-#        collection: baike_test
+baiduqianxi:
+    mongo:
+        host: 114.80.150.196
+        port: 27017
+        db: baiduqianxi_test
+        collection: baiduqianxi_test
+baidubaike:
+    mongo:
+        host: 114.80.150.196
+        port: 27017
+        db: baike
+        collection: baike_test
 #CEIC:
 #    mongo:
 #        host: 114.80.150.196
@@ -30,18 +30,18 @@
 #        collection: burg_name
 
 # online
-baiduqianxi:
-    mongo:
-        host: 114.80.150.196
-        port: 27017
-        db: baiduqianxi
-        collection: baiduqianxi
-baidubaike:
-    mongo:
-        host: 192.168.0.136
-        port: 27017
-        db: fangjia_youfang
-        collection: baike
+#baiduqianxi:
+#    mongo:
+#        host: 114.80.150.196
+#        port: 27017
+#        db: baiduqianxi
+#        collection: baiduqianxi
+#baidubaike:
+#    mongo:
+#        host: 192.168.0.136
+#        port: 27017
+#        db: fangjia_youfang
+#        collection: baike
 #CEIC:
 #    mongo:
 #        host: 192.168.0.235
