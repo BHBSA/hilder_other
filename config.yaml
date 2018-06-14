@@ -3,7 +3,7 @@ baiduqianxi:
     mongo:
         host: 114.80.150.196
         port: 27017
-        db: baiduqianxi
+        db: baiduqianxi_test
         collection: baiduqianxi_test
 baidubaike:
     mongo:
