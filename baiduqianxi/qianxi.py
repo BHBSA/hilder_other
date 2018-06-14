@@ -10,10 +10,11 @@ from lib.mongo import Mongo
 from queue import Queue
 from lib.log import LogHandler
 import yaml
+import time
 
 setting = yaml.load(open('config.yaml'))
 
-log = LogHandler('baiduqianxi')
+log = LogHandler(__name__)
 
 
 class Baiduqianxi:
@@ -22,7 +23,7 @@ class Baiduqianxi:
 
     now_time = datetime.datetime.now()
     today_int = int(now_time.strftime('%Y%m%d'))
-    q = Queue(maxsize = 0)
+    q = Queue(maxsize=0)
 
     def put_in_queue(self):
         for city_name in city_id_dict:
@@ -39,35 +40,37 @@ class Baiduqianxi:
             try:
                 type_ = 'move_in'
                 city = city_name
-                timeStr = str(self.today_int)
-                url = 'http://huiyan.baidu.com/migration/api/cityrank?dt=city&id=' + city_id + '&type=' + type_ + '&date=' + timeStr
+                time_str = str(self.today_int)
+                url = 'http://huiyan.baidu.com/migration/api/cityrank?dt=city&id=' + city_id + '&type=' + type_ + '&date=' + time_str
                 res_in = requests.get(url)
+                time.sleep(10)
                 in_info = re.search(r'\[(.*?)\]', res_in.text).group()
                 in_list = eval(in_info)
                 in_all_list = []
                 for i in in_list:
                     in_all_list.append(i)
                 type_ = 'move_out'
-                url = 'http://huiyan.baidu.com/migration/api/cityrank?dt=city&id=' + city_id + '&type=' + type_ + '&date=' + timeStr
+                url = 'http://huiyan.baidu.com/migration/api/cityrank?dt=city&id=' + city_id + '&type=' + type_ + '&date=' + time_str
                 res_out = requests.get(url)
+                time.sleep(10)
                 out_info = re.search(r'\[(.*?)\]', res_out.text).group()
                 out_list = eval(out_info)
                 out_all_list = []
                 for i in out_list:
                     out_all_list.append(i)
                 count += 1
-                log.debug('{}{}'.format(count, city_name))
+                log.info('count={},城市={}'.format(count, city_name))
                 data = {
                     'city': city_name,
-                    'date': int(timeStr),
+                    'date': int(time_str),
                     'insert_time': datetime.datetime.now(),
                     'in': in_all_list,
                     'out': out_all_list,
                 }
                 if not in_all_list and not in_all_list:
-                    log.error('迁入和迁出为空,{}'.format(city))
+                    log.info('迁入和迁出为空,{}'.format(city))
                 else:
-                    log.debug('插入一条数据,{}'.format(data))
+                    log.info('插入一条数据,{}'.format(data))
                     self.coll.insert_one(data)
                 self.q.task_done()
             except Exception as e:
